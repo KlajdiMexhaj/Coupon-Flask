@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.1/css/all.min.css" integrity="sha512-5Hs3dF2AEPkpNAR7UiOHba+lRSJNeM2ECkwxUIxC1Q/FLycGTbNapWXB4tP889k5T5Ju8fs4b1P5z/iB4nMfSQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body class="page-body">
+
+    <!-- Top-left Button -->
+    <a href="{{ url_for('admin.index') }}" class="top-button"><i class="fa-solid fa-left-long"></i></a>
+
+    <h1 class="counter-heading">Current Counter: {{ current_counter }}</h1>
+    <p class="visit-counter">Visit Counter: {{ counter }}</p>
+    
+    <!-- Counter Form -->
+    <form method="POST" class="counter-form">
+        <label for="new_counter" class="form-label">Enter New Counter Value:</label>
+        <input type="number" name="new_counter" min="1" required class="form-input">
+        <button type="submit" class="form-button">Save</button>
+    </form>
+
+    <!-- Image Upload Form -->
+    <form action="{{ url_for('.upload_image') }}" method="POST" enctype="multipart/form-data" class="upload-form">
+        <label class="form-label">Upload Image:</label>
+        <input type="file" name="image" accept="image/*" class="upload-input">
+        <button type="submit" class="upload-button">Upload</button>
+    </form>
+
+    <!-- Display Uploaded Images -->
+    <h2 class="images-heading">Uploaded Images</h2>
+    <ul class="images-list">
+        {% for image in images %}
+        <li class="image-item">
+            {{ image }}
+            <!-- Delete Image Form -->
+            <form action="{{ url_for('delete_image', image_name=image) }}" method="POST" class="delete-form">
+                <button type="submit" class="delete-button">Delete</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+
+
+
+
+<!-- Display API Access Log -->
+
+
+
+
+<div class="container">
+    <h1>API Access Log</h1>
+    <h2>Total API Accesses: <span style="color: #28a745;">{{ api_access_count }}</span></h2>
+
+    <div class="log-table">
+        <h3>Recent API Accesses</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>API URL</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in api_log_entries %}
+                <tr>
+                    <td>{{ entry.split(' - ')[0] }}</td>
+                    <td>{{ entry.split(' - ')[1] }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

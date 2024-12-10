@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Welcome to my website</h1>
+    
+    <!-- Display the current visit counter -->
+    <p>This is visit number {{ counter }}</p>
+
+
+        <!-- Popup Container -->
+        <div id="popup" class="popup">
+            <div class="popup-content">
+                <span id="close-popup" class="close">&times;</span>
+                <img src="{{ image_url }}" alt="Random Image" class="popup-image">
+            </div>
+        </div>
+
+
+    <!-- Display the random image -->
+    <img src="{{ image_url }}" alt="Random Image" style="max-width:100%; height:auto;">
+
+
+
+    <h1>Kalkjdi</h1>
+
+
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+</html>
