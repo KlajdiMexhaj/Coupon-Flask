@@ -336,3 +336,103 @@ tr:nth-child(even) {
 .log-table {
     margin-top: 20px;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Container */
+.containerr {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 22vh;
+    background-color: #f4f4f4;
+    padding: 20px;
+}
+
+/* Content Box */
+.content {
+    text-align: center;
+    padding: 25px;
+    background-color: #ffffff;
+    border-radius: 15px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+    max-width: 90%;
+    width: 500px;
+    margin: auto;
+}
+
+/* Header Styles */
+.content h1 {
+    font-size: 28px;
+    color: #2c3e50;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+/* Paragraph Styles */
+.content p {
+    font-size: 18px;
+    color: #7f8c8d;
+    margin-bottom: 20px;
+}
+
+/* Call Button Styles */
+.call-button {
+    display: inline-block;
+    background-color: #27ae60;
+    color: #fff;
+    padding: 16px 30px;
+    text-decoration: none;
+    font-size: 20px;
+    border-radius: 8px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    max-width: 100%;
+    word-wrap: break-word;
+}
+
+.call-button strong {
+    font-weight: bold;
+    font-size: 22px;
+}
+
+.call-button:hover {
+    background-color: #2ecc71;
+    transform: scale(1.05);
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 600px) {
+    .content h1 {
+        font-size: 22px;
+    }
+
+    .content p {
+        font-size: 16px;
+    }
+
+    .call-button {
+        font-size: 18px;
+        padding: 14px 25px;
+    }
+}
