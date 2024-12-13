@@ -21,14 +21,14 @@ UPLOAD_FOLDER = 'static/images/'
 # File to store IP-to-image mapping
 IP_IMAGE_MAPPING_FILE = "ip_image_mapping.json"
 
-# Helper function to get the visit counter value from counter.txt
+# Helper function to get the current visit counter value
 def get_counter():
     if os.path.exists(COUNTER_FILE):
         with open(COUNTER_FILE, 'r') as file:
             return int(file.read().strip())
     return 0  # Default value if counter file doesn't exist
 
-# Helper function to update the visit counter value in counter.txt
+# Helper function to update the visit counter value
 def update_counter(counter_value):
     with open(COUNTER_FILE, 'w') as file:
         file.write(str(counter_value))
@@ -252,9 +252,7 @@ def home():
         # Display "Coupon has expired" message if the counter exceeds the limit
         return render_template_string("<h1>Coupon has expired</h1>")
     
-    # Increment counter
-    counter += 1
-    update_counter(counter)
+
     
     # Handle random image display
     image_folder = os.path.join(app.static_folder, 'images')  # Path to the images folder
@@ -266,6 +264,11 @@ def home():
         #Assign a random image to this IP address
         assigned_image = random.choice(images)
         ip_image_mapping[visitor_ip] = assigned_image
+
+        # Increment the counter since this is a first-time visit
+        counter += 1
+        update_counter(counter)
+        
         save_ip_image_mapping(ip_image_mapping)
     else:
         assigned_image  = ip_image_mapping[visitor_ip]
