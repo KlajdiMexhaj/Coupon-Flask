@@ -51,7 +51,10 @@ def log_api_access():
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     api_url = request.url  # Log the full URL of the accessed API
     log_entry = f"{timestamp} - API accessed: {api_url}\n"
-    
+def log_VizitorIp(vizitorip):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    api_url = request.url  # Log the full URL of the accessed API
+    log_entry = f"{timestamp} - API accessed: {vizitorip}\n"
     # Write to the log file
     with open("api_access_log.txt", "a") as log_file:
         log_file.write(log_entry)
@@ -239,7 +242,7 @@ def home():
     
     # Get the visitor's IP address
     visitor_ip = request.remote_addr 
-
+    log_VizitorIp(request.remote_addr )
 
     # Get the counter limit from the configuration file
     counter_limit = get_limit()
