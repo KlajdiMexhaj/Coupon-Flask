@@ -241,7 +241,9 @@ def home():
     ip_image_mapping = load_ip_image_mapping()
     
     # Get the visitor's IP address
-    visitor_ip = request.remote_addr 
+    visitor_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    if visitor_ip:
+        visitor_ip = visitor_ip.split(',')[0]
     log_VizitorIp(request.remote_addr )
 
     # Get the counter limit from the configuration file
