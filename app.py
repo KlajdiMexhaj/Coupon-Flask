@@ -1,5 +1,6 @@
 import os
 import random
+import json
 from flask import Flask, render_template, url_for, render_template_string, request,redirect, flash
 from flask_admin import Admin
 from flask_admin.form import rules
@@ -7,6 +8,7 @@ from flask_admin.contrib.fileadmin import FileAdmin
 from flask_admin.base import BaseView, expose
 from flask_admin.actions import action
 from datetime import datetime
+from flask_login import UserMixin, LoginManager, login_user, login_required, logout_user, current_user
 
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Needed for Flask-Admin session handling
@@ -16,6 +18,8 @@ COUNTER_FILE = "counter.txt"
 CONFIG_FILE = "config.txt"
 EXPIRED_FILE = "expired.txt"  # To track if the coupon has expired
 UPLOAD_FOLDER = 'static/images/'
+# File to store IP-to-image mapping
+IP_IMAGE_MAPPING_FILE = "ip_image_mapping.json"
 
 # Helper function to get the visit counter value from counter.txt
 def get_counter():
@@ -52,17 +56,68 @@ def log_api_access():
     with open("api_access_log.txt", "a") as log_file:
         log_file.write(log_entry)
 
+# Helper function to load IP-to-image mapping
+def load_ip_image_mapping():
+    if os.path.exists(IP_IMAGE_MAPPING_FILE):
+        with open(IP_IMAGE_MAPPING_FILE, 'r') as file:
+            return json.load(file)
+    return {}
+
+# Helper function to save IP-to-image mapping
+def save_ip_image_mapping(mapping):
+    with open(IP_IMAGE_MAPPING_FILE, 'w') as file:
+        json.dump(mapping, file)
 
 
 
+# Set up Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+class User(UserMixin):
+    def __init__(self, id):
+        self.id = id
+
+# In-memory user store for the demo
+users = {'admin': {'password': 'admin'}}
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User(user_id)
 
 
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:  # Redirect logged-in users
+        return redirect(url_for('admin.index'))
+    
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        # Check user credentials
+        if username in users and users[username]['password'] == password:
+            user = User(username)
+            login_user(user, remember=True)
+            flash("Logged in successfully!")
+            return redirect(url_for('admin.index'))  # Redirect to admin page after login
+        else:
+            flash("Invalid credentials. Please try again.")
 
+    return '''
+        <form method="POST">
+            <input type="text" name="username" placeholder="Username"><br>
+            <input type="password" name="password" placeholder="Password"><br>
+            <button type="submit">Login</button>
+        </form>
+    '''
 
-
-
-
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
 
 
 
@@ -70,6 +125,7 @@ def log_api_access():
 # Admin view to handle counter changes
 class CounterAdmin(BaseView):
     @expose('/', methods=('GET', 'POST'))
+    @login_required 
     def index(self):
         # Get the visit counter from counter.txt (to track visits)
         counter = get_counter()
@@ -177,6 +233,14 @@ admin.add_view(CounterAdmin(name='CouponAdmin'))
 
 @app.route('/')
 def home():
+
+    # Load the IP-to-image mapping
+    ip_image_mapping = load_ip_image_mapping()
+    
+    # Get the visitor's IP address
+    visitor_ip = request.remote_addr 
+
+
     # Get the counter limit from the configuration file
     counter_limit = get_limit()
     # Log the access of the current API (this will log the full URL)
@@ -198,11 +262,16 @@ def home():
     if not images:
         return "<h1>No images found</h1>"
     
-    random_image = random.choice(images)  # Pick a random image
-    image_url = url_for('static', filename=f'images/{random_image}')  # Get URL for the image
-    
+    if visitor_ip not in ip_image_mapping:
+        #Assign a random image to this IP address
+        assigned_image = random.choice(images)
+        ip_image_mapping[visitor_ip] = assigned_image
+        save_ip_image_mapping(ip_image_mapping)
+    else:
+        assigned_image  = ip_image_mapping[visitor_ip]
+    image_url = url_for('static', filename = f'images/{assigned_image}')# Get URL for the image
     # Render the home.html template and pass the counter and image_url to it
-    return render_template('home.html', counter=counter, image_url=image_url)
+    return render_template('home.html',current_counter=counter_limit, counter=counter, image_url=image_url)
 
 
 

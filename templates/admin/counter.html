@@ -9,6 +9,15 @@
 </head>
 <body class="page-body">
 
+
+<!-- Logout link -->
+<a href="{{ url_for('logout') }}">Logout</a>
+
+<!-- You can also use a button to trigger the logout -->
+<form action="{{ url_for('logout') }}" method="post">
+    <button type="submit">Logout</button>
+</form>
+
     <!-- Top-left Button -->
     <a href="{{ url_for('admin.index') }}" class="top-button"><i class="fa-solid fa-left-long"></i></a>
 
