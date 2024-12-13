@@ -244,7 +244,7 @@ def home():
     visitor_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     if visitor_ip:
         visitor_ip = visitor_ip.split(',')[0]
-    log_VizitorIp(request.remote_addr )
+    log_VizitorIp(visitor_ip )
 
     # Get the counter limit from the configuration file
     counter_limit = get_limit()
