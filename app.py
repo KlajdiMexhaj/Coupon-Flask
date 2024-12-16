@@ -17,7 +17,7 @@ app.secret_key = 'supersecretkey'  # Needed for Flask-Admin session handling
 COUNTER_FILE = "counter.txt"
 CONFIG_FILE = "config.txt"
 EXPIRED_FILE = "expired.txt"  # To track if the coupon has expired
-UPLOAD_FOLDER = 'static/images/'
+UPLOAD_FOLDER = '/home/KuponUljeSalus/Coupon-Flask/static/images/'
 # File to store IP-to-image mapping
 IP_IMAGE_MAPPING_FILE = "ip_image_mapping.json"
 
@@ -70,6 +70,42 @@ def load_ip_image_mapping():
 def save_ip_image_mapping(mapping):
     with open(IP_IMAGE_MAPPING_FILE, 'w') as file:
         json.dump(mapping, file)
+
+from datetime import datetime
+
+# Helper function to get today's date as a string (YYYY-MM-DD)
+def get_today_date():
+    return datetime.now().strftime("%Y-%m-%d")
+
+# Helper function to read the last reset date from file
+def get_last_reset_date():
+    if os.path.exists("last_reset.txt"):
+        with open("last_reset.txt", "r") as file:
+            return file.read().strip()
+    return None  # No reset date found, so we assume it hasn't been reset yet
+
+# Helper function to update the last reset date in the file
+def update_last_reset_date():
+    today_date = get_today_date()
+    with open("last_reset.txt", "w") as file:
+        file.write(today_date)
+# Function to reset the IP-to-image mapping if the day has changed
+def reset_ip_image_mapping_if_new_day():
+    last_reset_date = get_last_reset_date()
+    today_date = get_today_date()
+    
+    # If the date has changed, reset the mapping
+    if last_reset_date != today_date:
+        # Reset the IP-to-image mapping
+        save_ip_image_mapping({})  # Clear the mappings
+        
+        # Update the last reset date
+        update_last_reset_date()
+
+
+
+
+
 
 
 
@@ -236,7 +272,11 @@ admin.add_view(CounterAdmin(name='CouponAdmin'))
 
 @app.route('/')
 def home():
-
+    
+    
+    # Reset the IP-image mapping if the day has changed
+    reset_ip_image_mapping_if_new_day()
+    
     # Load the IP-to-image mapping
     ip_image_mapping = load_ip_image_mapping()
     
