@@ -71,7 +71,10 @@ def save_ip_image_mapping(mapping):
     with open(IP_IMAGE_MAPPING_FILE, 'w') as file:
         json.dump(mapping, file)
 
-from datetime import datetime
+# Helper function to get the current counter from ip_image_mapping.json (count of unique IPs)
+def get_ip_counter():
+    ip_image_mapping = load_ip_image_mapping()
+    return len(ip_image_mapping)  # Count how many unique IPs there are
 
 # Helper function to get today's date as a string (YYYY-MM-DD)
 def get_today_date():
@@ -271,8 +274,6 @@ admin.add_view(CounterAdmin(name='CouponAdmin'))
 
 @app.route('/')
 def home():
-    
-    
     # Reset the IP-image mapping if the day has changed
     reset_ip_image_mapping_if_new_day()
     
@@ -283,42 +284,42 @@ def home():
     visitor_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     if visitor_ip:
         visitor_ip = visitor_ip.split(',')[0]
-    log_VizitorIp(visitor_ip )
-
+    
+    log_VizitorIp(visitor_ip)  # Log the visitor's IP
+    
     # Get the counter limit from the configuration file
     counter_limit = get_limit()
     # Log the access of the current API (this will log the full URL)
     log_api_access()
-    
-    # Handle counter logic
-    counter = get_counter()
+
+    # Get the current counter from ip_image_mapping.json (this counts unique IPs)
+    counter = get_ip_counter()
+
     if counter >= counter_limit and counter_limit > 0:
         # Display "Coupon has expired" message if the counter exceeds the limit
         return render_template_string("<h1>Coupon has expired</h1>")
-    
-
     
     # Handle random image display
     image_folder = os.path.join(app.static_folder, 'images')  # Path to the images folder
     images = os.listdir(image_folder)  # List all files in the images folder
     if not images:
         return "<h1>No images found</h1>"
-    
+
+    # If this is a new visitor IP (first visit), assign an image and increment the counter
     if visitor_ip not in ip_image_mapping:
-        #Assign a random image to this IP address
         assigned_image = random.choice(images)
         ip_image_mapping[visitor_ip] = assigned_image
-
-        # Increment the counter since this is a first-time visit
-        counter += 1
-        update_counter(counter)
         
-        save_ip_image_mapping(ip_image_mapping)
+        # Increment the counter since this is a first-time visit
+        save_ip_image_mapping(ip_image_mapping)  # Save updated IP-to-image mapping
+
     else:
-        assigned_image  = ip_image_mapping[visitor_ip]
-    image_url = url_for('static', filename = f'images/{assigned_image}')# Get URL for the image
+        assigned_image = ip_image_mapping[visitor_ip]
+
+    image_url = url_for('static', filename=f'images/{assigned_image}')  # Get URL for the image
     # Render the home.html template and pass the counter and image_url to it
-    return render_template('home.html',current_counter=counter_limit, counter=counter, image_url=image_url)
+    return render_template('home.html', current_counter=counter_limit, counter=counter, image_url=image_url)
+
 
 
 
