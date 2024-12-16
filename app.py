@@ -21,17 +21,17 @@ UPLOAD_FOLDER = '/home/KuponUljeSalus/Coupon-Flask/static/images/'
 # File to store IP-to-image mapping
 IP_IMAGE_MAPPING_FILE = "ip_image_mapping.json"
 
+# Helper function to update the visit counter value
+def update_counter(counter_value):
+    with open(COUNTER_FILE, 'w') as file:
+        file.write(str(counter_value))
+
 # Helper function to get the current visit counter value
 def get_counter():
     if os.path.exists(COUNTER_FILE):
         with open(COUNTER_FILE, 'r') as file:
             return int(file.read().strip())
     return 0  # Default value if counter file doesn't exist
-
-# Helper function to update the visit counter value
-def update_counter(counter_value):
-    with open(COUNTER_FILE, 'w') as file:
-        file.write(str(counter_value))
 
 # Helper function to get the current counter limit (the value from config.txt)
 def get_limit():
@@ -40,7 +40,7 @@ def get_limit():
             return int(file.read().strip())
     return 10  # Default limit if config file doesn't exist
 
-# Helper function to check if the counter has expired
+# Helper function to check if the coupon has expired
 def is_expired():
     if os.path.exists(EXPIRED_FILE):
         with open(EXPIRED_FILE, 'r') as file:
@@ -89,7 +89,6 @@ def update_last_reset_date():
     today_date = get_today_date()
     with open("last_reset.txt", "w") as file:
         file.write(today_date)
-# Function to reset the IP-to-image mapping if the day has changed
 def reset_ip_image_mapping_if_new_day():
     last_reset_date = get_last_reset_date()
     today_date = get_today_date()
