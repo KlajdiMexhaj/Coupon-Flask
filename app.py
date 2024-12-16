@@ -26,7 +26,7 @@ def get_counter():
     if os.path.exists(COUNTER_FILE):
         with open(COUNTER_FILE, 'r') as file:
             return int(file.read().strip())
-    return 0  # Default value if counter file doesn't exist
+    return 1  # Default value if counter file doesn't exist
 
 # Helper function to update the visit counter value
 def update_counter(counter_value):
@@ -315,4 +315,4 @@ def delete_image(image_name):
 
 
 if __name__ == '__main__':
-     app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)
