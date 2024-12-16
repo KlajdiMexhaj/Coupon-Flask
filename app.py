@@ -19,7 +19,7 @@ CONFIG_FILE = "/home/KuponUljeSalus/Coupon-Flask/config.txt"
 EXPIRED_FILE = "/home/KuponUljeSalus/Coupon-Flask/expired.txt"  # To track if the coupon has expired
 UPLOAD_FOLDER = '/home/KuponUljeSalus/Coupon-Flask/static/images/'
 # File to store IP-to-image mapping
-IP_IMAGE_MAPPING_FILE = "ip_image_mapping.json"
+IP_IMAGE_MAPPING_FILE = "/home/KuponUljeSalus/Coupon-Flask/ip_image_mapping.json"
 
 # Helper function to update the visit counter value
 def update_counter(counter_value):
