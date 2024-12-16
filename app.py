@@ -14,9 +14,9 @@ app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Needed for Flask-Admin session handling
 
 # Path to store the counter in a file
-COUNTER_FILE = "counter.txt"
-CONFIG_FILE = "config.txt"
-EXPIRED_FILE = "expired.txt"  # To track if the coupon has expired
+COUNTER_FILE = "/home/KuponUljeSalus/Coupon-Flask/counter.txt"
+CONFIG_FILE = "/home/KuponUljeSalus/Coupon-Flask/config.txt"
+EXPIRED_FILE = "/home/KuponUljeSalus/Coupon-Flask/expired.txt"  # To track if the coupon has expired
 UPLOAD_FOLDER = '/home/KuponUljeSalus/Coupon-Flask/static/images/'
 # File to store IP-to-image mapping
 IP_IMAGE_MAPPING_FILE = "ip_image_mapping.json"
@@ -169,7 +169,7 @@ class CounterAdmin(BaseView):
     @login_required 
     def index(self):
         # Get the visit counter from counter.txt (to track visits)
-        counter = get_counter()
+        counter = get_ip_counter()
 
         # Get the saved limit from config.txt (this is what will be displayed as current counter)
         limit = get_limit()
