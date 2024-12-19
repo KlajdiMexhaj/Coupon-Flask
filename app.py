@@ -324,7 +324,7 @@ admin.add_view(CounterAdmin(name='CouponAdmin'))
 
 @app.route('/')
 def home():
-    # Load total IP counter (across all days)
+    # Load the total IP counter (across all days)
     total_counter = load_total_ip_counter()
 
     # Load today's IP log (new unique IPs for the day)
@@ -347,9 +347,10 @@ def home():
         # Save today's updated IP log
         save_ip_log(ip_log)
 
-        # Increment the total unique IP counter and save it
-        total_counter += 1
-        save_total_ip_counter(total_counter)
+        # Increment the total unique IP counter if it's a new unique IP
+        if visitor_ip not in load_ip_image_mapping():
+            total_counter += 1  # Increment total counter
+            save_total_ip_counter(total_counter)  # Save the new total counter
 
     # Get the counter limit from the configuration file (config.txt)
     counter_limit = get_limit()
