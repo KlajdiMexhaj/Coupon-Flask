@@ -14,12 +14,12 @@ app = Flask(__name__)
 app.secret_key = 'supersecretkey'  # Needed for Flask-Admin session handling
 
 # Path to store the counter in a file
-COUNTER_FILE = "/home/KuponUljeSalus/Coupon-Flask/counter.txt"
-CONFIG_FILE = "/home/KuponUljeSalus/Coupon-Flask/config.txt"
-EXPIRED_FILE = "/home/KuponUljeSalus/Coupon-Flask/expired.txt"  # To track if the coupon has expired
+COUNTER_FILE = "counter.txt"
+CONFIG_FILE = "config.txt"
+EXPIRED_FILE = "expired.txt"  # To track if the coupon has expired
 UPLOAD_FOLDER = '/home/KuponUljeSalus/Coupon-Flask/static/images/'
 # File to store IP-to-image mapping
-IP_IMAGE_MAPPING_FILE = "/home/KuponUljeSalus/Coupon-Flask/ip_image_mapping.json"
+IP_IMAGE_MAPPING_FILE = "ip_image_mapping.json"
 
 # Helper function to update the visit counter value
 def update_counter(counter_value):
@@ -92,18 +92,38 @@ def update_last_reset_date():
     today_date = get_today_date()
     with open("last_reset.txt", "w") as file:
         file.write(today_date)
+        
+
+def get_daily_ip_image_mapping_file():
+    """Returns the filename for today's IP mapping."""
+    today_date = get_today_date()
+    return f"ip_image_mapping_{today_date}.json"
+
+def load_daily_ip_image_mapping():
+    """Loads the IP-to-image mapping for the current day."""
+    file_path = get_daily_ip_image_mapping_file()
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as file:
+            return json.load(file)
+    return {}
+
+def save_daily_ip_image_mapping(mapping):
+    """Saves the current day's IP-to-image mapping."""
+    file_path = get_daily_ip_image_mapping_file()
+    with open(file_path, 'w') as file:
+        json.dump(mapping, file)
 def reset_ip_image_mapping_if_new_day():
+    """Resets the mapping if it's a new day."""
     last_reset_date = get_last_reset_date()
     today_date = get_today_date()
     
     # If the date has changed, reset the mapping
     if last_reset_date != today_date:
         # Reset the IP-to-image mapping
-        save_ip_image_mapping({})  # Clear the mappings
+        save_daily_ip_image_mapping({})  # Clear today's mappings
         
         # Update the last reset date
         update_last_reset_date()
-
 
 
 
@@ -277,8 +297,8 @@ def home():
     # Reset the IP-image mapping if the day has changed
     reset_ip_image_mapping_if_new_day()
     
-    # Load the IP-to-image mapping
-    ip_image_mapping = load_ip_image_mapping()
+    # Load the IP-to-image mapping for the current day
+    ip_image_mapping = load_daily_ip_image_mapping()
     
     # Get the visitor's IP address
     visitor_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
@@ -292,9 +312,9 @@ def home():
     # Log the access of the current API (this will log the full URL)
     log_api_access()
 
-    # Get the current counter from ip_image_mapping.json (this counts unique IPs)
-    counter = get_ip_counter()
-
+    # Get the current counter from ip_image_mapping (this counts unique IPs)
+    counter = get_ip_counter()  # Use get_ip_counter() to count unique IPs
+    
     if counter >= counter_limit and counter_limit > 0:
         # Display "Coupon has expired" message if the counter exceeds the limit
         return render_template_string("<h1>Coupon has expired</h1>")
@@ -311,7 +331,7 @@ def home():
         ip_image_mapping[visitor_ip] = assigned_image
         
         # Increment the counter since this is a first-time visit
-        save_ip_image_mapping(ip_image_mapping)  # Save updated IP-to-image mapping
+        save_daily_ip_image_mapping(ip_image_mapping)  # Save updated IP-to-image mapping
 
     else:
         assigned_image = ip_image_mapping[visitor_ip]
@@ -319,8 +339,6 @@ def home():
     image_url = url_for('static', filename=f'images/{assigned_image}')  # Get URL for the image
     # Render the home.html template and pass the counter and image_url to it
     return render_template('home.html', current_counter=counter_limit, counter=counter, image_url=image_url)
-
-
 
 
 # Route to delete an image
