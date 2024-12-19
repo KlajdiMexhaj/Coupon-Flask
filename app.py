@@ -20,6 +20,7 @@ EXPIRED_FILE = "expired.txt"  # To track if the coupon has expired
 UPLOAD_FOLDER = '/home/KuponUljeSalus/Coupon-Flask/static/images/'
 # File to store IP-to-image mapping
 IP_IMAGE_MAPPING_FILE = "ip_image_mapping.json"
+TOTAL_IP_COUNTER_FILE = "total_ip_counter.txt"
 
 # Helper function to update the visit counter value
 def update_counter(counter_value):
@@ -64,7 +65,7 @@ def load_ip_image_mapping():
     if os.path.exists(IP_IMAGE_MAPPING_FILE):
         with open(IP_IMAGE_MAPPING_FILE, 'r') as file:
             return json.load(file)
-    return {}
+    return {}  # Return an empty dict if the mapping file doesn't exist
 
 # Helper function to save IP-to-image mapping
 def save_ip_image_mapping(mapping):
@@ -125,7 +126,36 @@ def reset_ip_image_mapping_if_new_day():
         # Update the last reset date
         update_last_reset_date()
 
+# Helper function to load the total IP counter (persistent count of all unique IPs)
+def load_total_ip_counter():
+    if os.path.exists(TOTAL_IP_COUNTER_FILE):
+        with open(TOTAL_IP_COUNTER_FILE, 'r') as file:
+            return int(file.read().strip())
+    return 0  # Default to 0 if the file doesn't exist
 
+# Helper function to save the total IP counter
+def save_total_ip_counter(counter):
+    with open(TOTAL_IP_COUNTER_FILE, 'w') as file:
+        file.write(str(counter))
+
+# Helper function to get the filename for today's IP log
+def get_ip_log_file():
+    today_date = get_today_date()
+    return f"ip_log_{today_date}.json"  # File name based on today's date
+
+# Load the IP log for the current day (new unique IPs)
+def load_ip_log():
+    file_path = get_ip_log_file()
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as file:
+            return json.load(file)
+    return []  # Return empty list if no log exists
+
+# Save the IP log for the current day
+def save_ip_log(ip_list):
+    file_path = get_ip_log_file()
+    with open(file_path, 'w') as file:
+        json.dump(ip_list, file)
 
 
 
@@ -294,51 +324,63 @@ admin.add_view(CounterAdmin(name='CouponAdmin'))
 
 @app.route('/')
 def home():
-    # Reset the IP-image mapping if the day has changed
-    reset_ip_image_mapping_if_new_day()
-    
-    # Load the IP-to-image mapping for the current day
-    ip_image_mapping = load_daily_ip_image_mapping()
-    
+    # Load total IP counter (across all days)
+    total_counter = load_total_ip_counter()
+
+    # Load today's IP log (new unique IPs for the day)
+    ip_log = load_ip_log()
+
+    # Load the IP-to-image mapping (assign images to each IP)
+    ip_image_mapping = load_ip_image_mapping()
+
     # Get the visitor's IP address
     visitor_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     if visitor_ip:
-        visitor_ip = visitor_ip.split(',')[0]
+        visitor_ip = visitor_ip.split(',')[0]  # Get the first IP if there are multiple forwarded IPs
     
-    log_VizitorIp(visitor_ip)  # Log the visitor's IP
-    
-    # Get the counter limit from the configuration file
+    log_VizitorIp(visitor_ip)  # Log the visitor's IP (this logs each access)
+
+    # Check if this IP has already visited today
+    if visitor_ip not in ip_log:
+        ip_log.append(visitor_ip)  # Add new IP to today's log
+        
+        # Save today's updated IP log
+        save_ip_log(ip_log)
+
+        # Increment the total unique IP counter and save it
+        total_counter += 1
+        save_total_ip_counter(total_counter)
+
+    # Get the counter limit from the configuration file (config.txt)
     counter_limit = get_limit()
+
     # Log the access of the current API (this will log the full URL)
     log_api_access()
 
-    # Get the current counter from ip_image_mapping (this counts unique IPs)
-    counter = get_ip_counter()  # Use get_ip_counter() to count unique IPs
-    
-    if counter >= counter_limit and counter_limit > 0:
-        # Display "Coupon has expired" message if the counter exceeds the limit
+    # If the total counter reaches the limit, show "Coupon has expired"
+    if total_counter >= counter_limit and counter_limit > 0:
         return render_template_string("<h1>Coupon has expired</h1>")
-    
+
     # Handle random image display
     image_folder = os.path.join(app.static_folder, 'images')  # Path to the images folder
     images = os.listdir(image_folder)  # List all files in the images folder
     if not images:
         return "<h1>No images found</h1>"
 
-    # If this is a new visitor IP (first visit), assign an image and increment the counter
+    # Randomly assign an image to the visitor IP if it's the first time they visit
     if visitor_ip not in ip_image_mapping:
         assigned_image = random.choice(images)
         ip_image_mapping[visitor_ip] = assigned_image
-        
-        # Increment the counter since this is a first-time visit
-        save_daily_ip_image_mapping(ip_image_mapping)  # Save updated IP-to-image mapping
+
+        # Save the updated IP-to-image mapping
+        save_ip_image_mapping(ip_image_mapping)
 
     else:
         assigned_image = ip_image_mapping[visitor_ip]
 
     image_url = url_for('static', filename=f'images/{assigned_image}')  # Get URL for the image
     # Render the home.html template and pass the counter and image_url to it
-    return render_template('home.html', current_counter=counter_limit, counter=counter, image_url=image_url)
+    return render_template('home.html', current_counter=counter_limit, counter=total_counter, image_url=image_url)
 
 
 # Route to delete an image
